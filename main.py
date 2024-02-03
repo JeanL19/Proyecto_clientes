@@ -1,72 +1,47 @@
 from config.db import cursor, conexion
 from fastapi import FastAPI
-from models.client_date import Client
 
 app = FastAPI()
 
-clientes = [
-    {
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
 
-    "id": 1,
-    "cliente": "Admin",
-    "contacto": "admin@admin.com",
-    "fecha_ingreso": "22 de Enero 2024",
-    "diagnostico": "Programando",
-    "tipo": "Escritorio",
-    "marca_modelo": "Asus H-61MK",
-    "estado": "Tirando Codigo",
-},
-{
-
-    "id": 2,
-    "cliente": "moder",
-    "contacto": "moder@admin.com",
-    "fecha_ingreso": "22 de Enero 2024",
-    "diagnostico": "Moderando",
-    "tipo": "Monitor",
-    "marca_modelo": "None",
-    "estado": "Observando",
-}
-]
-
-@app.get('/')
-async def message():
-    return "Bienvenido a la base de clientes"
-
-@app.get('/clientes')
-async def get_clients():
+@app.get("/clientes")
+async def obtener_clientes():
+    cursor.execute("SELECT * FROM clientes")
+    clientes = cursor.fetchall()
     return clientes
 
-@app.get('/clientes/{id}')
-async def get_client_Id(id: int):
-    return list(filter(lambda item: item["id"] == id, clientes))
-
-@app.get('/clientes/')
-async def get_client_By_model(tipo: str, marca_modelo: str):
-    return list(filter(lambda item: item['tipo'] == tipo or item['marca_modelo'] == marca_modelo, clientes))
-
-@app.put('/clientes/{id}')
-async def update_client(id: int, client: Client):
-    for index, item in enumerate(clientes):
-        if item['id'] == id:
-            clientes[index]['cliente'] == client.cliente
-            clientes[index]['contacto'] == client.contacto
-            clientes[index]['fecha_ingreso'] == client.fecha_ingreso
-            clientes[index]['diagnostico'] == client.diagnostico
-            clientes[index]['tipo'] == client.tipo
-            clientes[index]['marca_modelo'] == client.marca_modelo
-            clientes[index]['estado'] == client.estado
+@app.get("/clientes/{name}")
+async def obtener_clientes(name: str):
+    cursor.execute("SELECT * FROM clientes WHERE Nombre = '"+str(name)+"'")
+    clientes = cursor.fetchall()
     return clientes
 
-@app.post('/new_cliente/')
-def create_cliente(client:Client):
-    clientes.append(client)
+@app.get("/clientes/{id}") ### no funciona aun si puedes buscale solucion porfis
+async def obtener_clientes(id: int):
+    cursor.execute("SELECT * FROM clientes WHERE id = '"+str(id)+"'")
+    clientes = cursor.fetchall()
     return clientes
 
-@app.delete('/delete_cliemte/{id}')
-def delete_cliemtes(id:int):
-    for item in clientes:
-        if item['id']==id:
-            clientes.remove(item)
-    return clientes
+@app.post("/crear-cliente")
+async def crear_cliente(Nombre: str, Contacto: str, Fecha_ingreso: str, Tipo: str, Marca: str, Modelo: str, Diagnostico: str, Estado: str):
+    cursor.execute("INSERT INTO clientes (Nombre, Contacto, Fecha_ingreso, Tipo, Marca, Modelo, Diagnostico, Estado) VALUES ('"+Nombre+"', '"+str(Contacto)+"', '"+Fecha_ingreso+"', '"+Tipo+"', '"+Marca+"', '"+Modelo+"', '"+Diagnostico+"', '"+Estado+"' )")
+    conexion.commit()
+    return {"mensaje": "Cliente creado correctamente"}
+
+@app.put("/actualizar-cliente/{name}")
+async def actualizar_cliente(name: str, newEstado: str):
+    cursor.execute("UPDATE clientes SET Estado = '"+newEstado+"' WHERE Nombre = '"+str(name)+"'")
+    conexion.commit()
+    return {"mensaje": "cliente actualizado correctamente"}
+
+@app.delete('/eliminar_cliente/{id}')
+async def eliminar_cliente(id:int):
+    cursor.execute("DELETE FROM clientes WHERE id = '"+str(id)+"'")
+    conexion.commit()
+    return {"messaje": "Cliente Eliminado Correctamente"}
+
+
 
